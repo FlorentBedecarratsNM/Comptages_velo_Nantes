@@ -341,7 +341,9 @@ update_trends <- function() {
     return(trends)
 }
 
-# Interface utilisateurs -----------------------------------------------------------
+# Interface utilisateurs -------------------------------------------------------
+
+## UI --------------------------------------------------------------------------
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -423,7 +425,7 @@ ui <- fluidPage(
   )
 )
 
-# Serveur -------------------------------------------------------
+## Serveur ---------------------------------------------------------------------
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
