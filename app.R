@@ -42,11 +42,16 @@ prep_feries <- function(file_holidays = "jours_feries.csv") {
 }
 
 # Plot anomalies ---------------------------------------------
-plot_anom_day <- function(x, omit_last_day = TRUE) {
+plot_anom_day <- function(x, n_days = NA, omit_last_day = TRUE) {
     if (omit_last_day) {
         x <- x %>%
             filter(date != max(date))
     }
+  # Filter dates
+  if (!is.na(n_days)) {
+    x <- x %>% 
+      filter(date >= (max(date) - n_days))
+  }
     x %>% 
         group_by(date) %>% 
         summarise(anom_high = mean(anom == "Forte probabilité d'anomalie"),
@@ -429,12 +434,13 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-  
+   count_current <- reactiveValues(df = NULL)
     # Load current years' file (download if not present)
     if (file.exists("data/count_2020.rda")) {
-        load("data/count_2020.rda")
+      load("data/count_2020.rda")
+      count_current$df <- count_2020
     } else {
-        count_2020 <- load_current()
+        count_current$df <- load_current()
     }
 
     # Load historic data (download if not present)
@@ -496,7 +502,7 @@ server <- function(input, output) {
     observeEvent(input$update_source, {
         showModal(modalDialog("Veuillez patienter, l'application télécharge les données les plus récentes",
                               footer=NULL))
-        count_2020 <- load_current()
+        count_current$df <- load_current()
         removeModal()
     })
     
@@ -507,20 +513,23 @@ server <- function(input, output) {
     output$anom_hist_plot <- renderPlot({
     #    count_2020 <- prep_current("bikecount_currentyear.csv",
     #                               omit_last_day = input$removeLastDay) 
-        count_2020 %>%
-            plot_anom_day(omit_last_day = input$removeLastDay)
+        count_current$df %>%
+            plot_anom_day(omit_last_day = input$removeLastDay,
+                          n_days = input$slider_days)
         })
+    
     output$slider_days <- renderUI({
-        maxdate <- max(count_2020$date)
-        mindate <- min(count_2020$date)
+        maxdate <- max(count_current$df$date)
+        mindate <- min(count_current$df$date)
         
         sliderInput("slider_days", min   = 1, 
                     label = "Nombre de jours à inclure dans le détail des compteurs",
                     max   = as.numeric(maxdate-mindate),
                     value = 200)
     })
+    
     output$slider_counters <- renderUI({
-        nb_counters <- length(unique(count_2020$name))
+        nb_counters <- length(unique(count_current$df$name))
         
         sliderInput("slider_counters", min   = 1, 
                     label = "Nombre de boucles à inclure dans le détail des compteurs",
@@ -536,7 +545,7 @@ server <- function(input, output) {
                     choices = as_list(list_boucles))
     })
     output$anom_detail_plot <- renderPlot({
-        count_2020 %>%
+        count_current$df %>%
             plot_anom_counter(
                 n_counters = input$slider_counters, 
                 n_days = input$slider_days,
