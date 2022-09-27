@@ -339,6 +339,7 @@ loop_counters <- function(x) {
 
 update_trends <- function() {
     count_2020 <- load_current()
+    count_2014_19 <- load_historic()
     trends <- count_2020 %>%
         merge_current_historic(count_2014_19) %>%
         loop_counters()
@@ -358,21 +359,36 @@ ui <- fluidPage(
     tabPanel(
       "Anomalies",
       # Sidebar with a slider input for number of bins 
-      sidebarLayout(
-        sidebarPanel(
-          checkboxInput("removeLastDay", "Omettre le dernier jour", 
-                        value = TRUE, width = NULL),
-          uiOutput("slider_days"),
-          uiOutput("slider_counters"),
-          actionButton("update_source", "Mise à jour des données")
-        ),
-        
-        # Show a plot of the generated distribution
-        mainPanel(
-          plotOutput("anom_hist_plot", height = "200px"),
-          plotOutput("anom_detail_plot")
-        )
+      fluidRow(
+        column(4,
+               checkboxInput("removeLastDay", "Omettre le dernier jour",
+                             value = TRUE, width = NULL),
+               uiOutput("slider_days"),
+               uiOutput("slider_counters"),
+               actionButton("update_source", "Mise à jour des données")),
+        column(8,
+               plotOutput("anom_hist_plot"))
+      ),
+      fluidRow(
+        column(12,
+               plotOutput("anom_detail_plot"))
       )
+       # Sidebar with a slider input for number of bins 
+      # sidebarLayout(
+      #   sidebarPanel(
+      #     checkboxInput("removeLastDay", "Omettre le dernier jour", 
+      #                   value = TRUE, width = NULL),
+      #     uiOutput("slider_days"),
+      #     uiOutput("slider_counters"),
+      #     actionButton("update_source", "Mise à jour des données")
+      #   ),
+      #   
+      #   # Show a plot of the generated distribution
+      #   mainPanel(
+      #     plotOutput("anom_hist_plot", height = "200px"),
+      #     plotOutput("anom_detail_plot")
+      #   )
+      # )
     ),
     tabPanel(
       "Tendances",
@@ -393,6 +409,7 @@ ui <- fluidPage(
                               label = 'Période de départ (P1)',
                               start = "2014-01-01", end = Sys.Date(),
                               min = "2014-01-01", max = Sys.Date(),
+                               format = "dd/mm/yyyy",
                               separator = " - ",  # format = "dd/mm/yyyy",
                               startview = 'year', language = 'fr', weekstart = 1
                ),
@@ -400,6 +417,7 @@ ui <- fluidPage(
                               label = "Période d'arrivée (P2)",
                               start = "2014-01-01", end = Sys.Date(),
                               min = "2014-01-01", max = Sys.Date(),
+                              format = "dd/mm/yyyy",
                               separator = " - ",  # format = "dd/mm/yyyy",
                               startview = 'year', language = 'fr', weekstart = 1
                ),
